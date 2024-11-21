@@ -52,7 +52,7 @@
 
 - **HTTPS**: All communication is encrypted using HTTPS.
 - **Token-based Authentication**: Secure API access using JWT.
-- **Password Hashing**: Passwords are securely hashed with bcrypt.
+- **Password Hashing**: Passwords are securely hashed.
 
 ---
 
