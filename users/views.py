@@ -140,3 +140,33 @@ def delete_account(request):
         {"message": "Your account has been deleted. We're sorry to see you go."},
         status=status.HTTP_200_OK
     )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout(request):
+    """
+    Logout the user by blacklisting their refresh token.
+    """
+    try:
+        # Extract the refresh token from the request
+        refresh_token = request.data.get("refresh")
+        if not refresh_token:
+            return Response(
+                {"error": "Refresh token is required for logout."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Blacklist the refresh token
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+
+        return Response(
+            {"message": "User logged out successfully."},
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {"error": f"An error occurred during logout: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
