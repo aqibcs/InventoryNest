@@ -39,7 +39,7 @@
 - **POST /create-resources**: Create a new resource (e.g., product).
 - **GET /resources**: List resources with optional filtering.
 - **GET /resources/{id}**: Retrieve a resource by ID.
-- **PATCH /resources/{id}/update**: Update a resource by ID.
+- **PUT/PATCH /resources/{id}/update**: Update a resource by ID.
 - **DELETE /resources/{id/delete}**: Delete a resource.
 
 ### Admin Features
@@ -53,13 +53,6 @@
 - **HTTPS**: All communication is encrypted using HTTPS.
 - **Token-based Authentication**: Secure API access using JWT.
 - **Password Hashing**: Passwords are securely hashed.
-
----
-
-## Performance Considerations
-
-- **Caching**: Cache responses where necessary to improve data retrieval speed.
-- **Optimized Queries**: Ensure that database queries are efficient and minimize unnecessary load.
 
 ---
 
