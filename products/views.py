@@ -1,5 +1,5 @@
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
@@ -20,9 +20,9 @@ def create_product(request):
 
 # 2. List Products (GET request) with Pagination
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def list_products(request):
-    products = Product.objects.filter(user=request.user)
+    products = Product.objects.all()
 
     # Apply search filter (e.g., search by product name)
     search_query = request.query_params.get('search', '')
@@ -37,7 +37,7 @@ def list_products(request):
 
     # Pagination
     paginator = PageNumberPagination()
-    paginator.page_size = 10  # Default page size, you can adjust as needed
+    paginator.page_size = 10
     paginated_products = paginator.paginate_queryset(products, request)
 
     serializer = ProductsSerializer(paginated_products, many=True)
