@@ -11,6 +11,7 @@
 
 - **User Authentication**: Secure sign-up, login, and token-based authentication (JWT).
 - **Data Management**: Perform CRUD operations on resources like products, users, and orders.
+- **Order Management**: Create, update, cancel, and delete orders with email notifications.
 - **Search & Filtering**: Filter and search through resources based on specific criteria.
 - **Pagination**: Efficient data retrieval with pagination for large datasets.
 - **Admin Controls**: Role management, access control, and monitoring for administrators.
@@ -21,6 +22,7 @@
 
 - **User Account Management**: Enable users to sign up, log in, and manage their profiles securely.
 - **Resource CRUD Operations**: Allow users to create, read, update, and delete resources such as products or orders.
+- **Order Management**: Handle order creation, status updates, cancellation, and deletion with stock validation and email notifications.
 - **Search & Filter**: Empower users to find resources quickly using search and filter features.
 - **Token-based Authentication**: Provide secure API access through JWT-based authentication.
 - **Admin Role Management**: Admins can manage user roles and monitor API usage.
@@ -41,6 +43,13 @@
 - **GET /resources/{id}**: Retrieve a resource by ID.
 - **PUT/PATCH /resources/{id}/update**: Update a resource by ID.
 - **DELETE /resources/{id/delete}**: Delete a resource.
+
+### Order Management
+- **POST /orders/create**: Create a new order (authenticated or guest users).
+- **GET /orders**: List all orders (authenticated users only).
+- **GET /orders/{id}**: Retrieve order details by ID.
+- **PUT/PATCH /orders/{id}/update**: Update the status of an order.
+- **DELETE /orders/{id}/delete**: Delete an order.
 
 ### Admin Features
 - **GET /admin/users**: List all users (admin access only).
