@@ -42,7 +42,7 @@ def create_order(request):
                         status=status.HTTP_404_NOT_FOUND)
 
     # Serialize the data and save the order
-    serializer = OrderSerializer(data=data)
+    serializer = OrderSerializer(data=data, context={'request': request})
     if serializer.is_valid():
         serializer.save()
         # Reduce stock of the product once the order is successfully created
@@ -56,8 +56,8 @@ def create_order(request):
         try:
             send_mail(
                 subject="Order Confirmation from InventoryNest",
-                message=
-                f"Hi {user_email},\n\nYour order for {product.name} has been successfully placed! We'll notify you when your order status is updated.\n\nThank you for shopping with us!",
+                message=(
+                    f"Hi {user_email},\n\nYour order for {product.name} has been successfully placed! We'll notify you when your order status is updated.\n\nThank you for shopping with us!"),
                 from_email=settings.EMAIL_HOST_USER,
                 recipient_list=[user_email],
                 fail_silently=False,
@@ -102,14 +102,17 @@ def update_order(request, order_id):
                         status=status.HTTP_404_NOT_FOUND)
 
     # Ensure the user has the correct permissions
-    if not (request.user == order.product.user or request.user.is_staff):
+    if not (request.user == order.user or request.user.is_staff):
         return Response(
             {"error": "You don't have permission to update this order."},
             status=status.HTTP_403_FORBIDDEN)
 
-    serializer = OrderSerializer(order, data=request.data, partial=True)
+    serializer = OrderSerializer(order, data=request.data, partial=True, context={'request': request})
     if serializer.is_valid():
-        # Check if the status is being updated
+        # Save the updated order
+        serializer.save()
+
+        # Notify user about the status update if applicable
         if 'status' in request.data:
             status_message = request.data['status']
 
@@ -121,11 +124,9 @@ def update_order(request, order_id):
                     # Send email notification about the status update
                     send_mail(
                         subject="Your Order Status Update",
-                        message=(
-                            f"Hi {user_email},\n\n"
-                            f"Your order for {order.product.name} has been updated to: {status_message}.\n\n"
-                            "Thank you for shopping with us!"
-                        ),
+                        message=(f"Hi {user_email},\n\n"
+                                 f"Your order for {order.product.name} has been updated to: {status_message}.\n\n"
+                                 "Thank you for shopping with us!"),
                         from_email=settings.EMAIL_HOST_USER,
                         recipient_list=[user_email],
                         fail_silently=False,
@@ -138,6 +139,7 @@ def update_order(request, order_id):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
