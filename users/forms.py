@@ -46,5 +46,5 @@ class UserRegistrationForm(forms.ModelForm):
 
 # Form for validate a login user
 class UserLoginForm(forms.Form):
-    username = forms.CharField(required=True, max_length=100)
+    identifier = forms.CharField(required=True, max_length=100, label="Username or Email")
     password = forms.CharField(widget=forms.PasswordInput, label="Password")

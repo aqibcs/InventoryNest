@@ -5,7 +5,8 @@
 **InventoryNest** is a user authentication and profile management system. It allows users to register, log in, update their profiles, and delete their accounts. The backend is built using Django and Django Rest Framework (DRF), and it incorporates JWT (JSON Web Tokens) for secure user authentication. The API provides the following features:
 
 - User Registration (Signup)
-- User Login
+- User Login with OTP
+- Email Verification for Registration
 - User Profile Management (Retrieve, Update)
 - Account Deletion
 
@@ -58,7 +59,7 @@ Here are the available endpoints:
 ## 1. User Registration (Signup)
 
 - **Endpoint**: `POST /signup/`
-- **Description**: Registers a new user.
+- **Description**: Registers a new user. Sends a verification email with a unique link for email verification.
 
 ### Request Body:
 ```json
@@ -75,25 +76,32 @@ Here are the available endpoints:
 ### Response:
 ```json
 {
-  "message": "User registered successfully.",
-  "token": {
-    "refresh": "jwt_refresh_token",
-    "access": "jwt_access_token"
-  }
+  "message": "User registered successfully. Please verify your email.",
+}
+```
+
+## 2. Email Verification
+- **Endpoints:** `GET /verify-email/<uid>/<token>/`
+- **Description:** Verifies the user's email after registration using a unique token and UID.
+
+### Response:
+```json
+{
+  "message": "Email verified successfully!"
 }
 ```
 
 ---
 
-## 2. User Login
+## 2. User Login with OTP
 
 - **Endpoint**: `POST /login/`
-- **Description**: Logs a user into the system and returns a JWT token.
+- **Description**: Logs a user into the system. On successful login, sends an OTP to the user's registered email.
 
 ### Request Body:
 ```json
 {
-  "username": "user123",
+  "identifier": "user123",
   "password": "password123"
 }
 ```
@@ -101,7 +109,26 @@ Here are the available endpoints:
 ### Response:
 ```json
 {
-  "message": "User login successfully.",
+  "message": "OTP sent to your email."
+}
+```
+
+## 4. Verify OTP
+- **Endpoint:** `POST /verify-otp/`
+- **Description:** Verifies the OTP sent to the user's email and logs the user in upon successful verification.
+
+### Request Body:
+```json
+{
+  "identifier": "user123",
+  "otp": "123456"
+}
+```
+
+### Response:
+```json
+{
+  "message": "Login successful.",
   "token": {
     "refresh": "jwt_refresh_token",
     "access": "jwt_access_token"
