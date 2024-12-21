@@ -1,11 +1,13 @@
 from django.urls import path
-from .views import logout, signup, login, get_profile, update_profile, delete_account
+from . import views
 
 urlpatterns = [
-    path('signup/', signup, name='signup'),
-    path('login/', login, name='login'),
-    path('profile/', get_profile, name='get-profile'),
-    path('profile/update/', update_profile, name='update-profile'),
-    path('delete-account/', delete_account, name='delete-account'),
-    path('logout/', logout, name='logout'),
+    path('signup/', views.signup, name='signup'),
+    path('verify-email/<uid>/<token>/', views.verify_email, name='verify_email'),
+    path('login/', views.login, name='login'),
+    path('verify-otp/', views.verify_otp, name='verify_otp'),
+    path('profile/', views.view_profile, name='manage_profile'),
+    path('profile/update/', views.update_profile, name='update_profile'),
+    path('delete-account/', views.delete_account, name='delete_account'),
+    path('logout/', views.logout, name='logout'),
 ]
