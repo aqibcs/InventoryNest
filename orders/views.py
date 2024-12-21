@@ -5,68 +5,105 @@ from rest_framework import status
 from django.core.mail import send_mail
 
 from InventoryNest import settings
+from cart.models import Cart
 from .models import Order
 from .serializers import OrderSerializer
 from products.models import Product
+from django.db import transaction
 
 
 # Create an order (public access - for both authenticated and unauthenticated users)
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def create_order(request):
-    data = request.data
+def process_order(request):
+    """
+    Combines cart checkout and order creation in one function.
+    """
+    user = request.user if request.user.is_authenticated else None
+    guest_email = request.data.get('email') if not user else None
+    session_id = request.session.session_key
 
-    # If the user is authenticated, use their user ID
-    if request.user.is_authenticated:
-        data['user'] = request.user.id
-    else:
-        # If the user is not authenticated, we require a guest email
-        guest_email = data.get('guest_email')
-        if not guest_email:
-            return Response(
-                {"error": "Guest email is required for anonymous orders."},
-                status=status.HTTP_400_BAD_REQUEST)
-        data['guest_email'] = guest_email  # Set the guest email
+    # Ensure the session is valid for unauthenticated users
+    if not session_id:
+        request.session.create()
 
-    # Validate if enough stock is available before saving
-    product_id = data.get('product')
-    quantity = data.get('quantity')
-
+    # Retrieve cart items
     try:
-        product = Product.objects.get(id=product_id)
-        if product.stock < quantity:
-            return Response({"error": "Not enough stock available."},
-                            status=status.HTTP_400_BAD_REQUEST)
-    except Product.DoesNotExist:
-        return Response({"error": "Product not found."},
-                        status=status.HTTP_404_NOT_FOUND)
+        cart = Cart.objects.get(user=user, session_id=session_id)
+        cart_items = cart.items.select_related('product')
+    except Cart.DoesNotExist:
+        return Response({'error': 'Your cart is empty.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Serialize the data and save the order
-    serializer = OrderSerializer(data=data, context={'request': request})
-    if serializer.is_valid():
-        serializer.save()
-        # Reduce stock of the product once the order is successfully created
-        product.stock -= quantity
-        product.save()
+    # Validate stock and prepare order data
+    order_data = []
+    with transaction.atomic():
+        for item in cart_items:
+            product = item.product
 
-        # Send order confirmation email
-        user_email = data.get(
-            'guest_email'
-        ) if not request.user.is_authenticated else request.user.email
+            # Check stock availability
+            if product.stock < item.quantity:
+                return Response({'error': f"Not enough stock for {product.name}."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create order
+            order = Order.objects.create(
+                user=user,
+                guest_email=guest_email,
+                product=product,
+                quantity=item.quantity,
+                total_price=product.price * item.quantity,
+                status=Order.PENDING
+            )
+
+            # Deduct stock
+            product.stock -= item.quantity
+            product.save()
+
+            order_data.append({
+                'order_id': order.id,
+                'product_name': product.name,
+                'quantity': item.quantity,
+                'actual_price': product.price,  # Include actual price
+                'total_price': order.total_price,
+                'user': user.username if user else guest_email
+            })
+
+        # Clear the cart
+        cart.items.all().delete()
+
+    # Send notification email
+    recipient_email = guest_email if not user else user.email
+    if recipient_email:
         try:
+            order_details = "\n".join(
+                [
+                    f"- {data['product_name']} (x{data['quantity']}): "
+                    f"Actual Price: ${data['actual_price']:.2f}, Total: ${data['total_price']:.2f}"
+                    for data in order_data
+                ]
+            )
             send_mail(
                 subject="Order Confirmation from InventoryNest",
                 message=(
-                    f"Hi {user_email},\n\nYour order for {product.name} has been successfully placed! We'll notify you when your order status is updated.\n\nThank you for shopping with us!"),
+                    f"Hi,\n\nThank you for your order! Here are the details of your purchase:\n\n"
+                    f"{order_details}\n\n"
+                    f"We'll notify you when your order status is updated.\n\nThank you for shopping with us!"
+                ),
                 from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[user_email],
+                recipient_list=[recipient_email],
                 fail_silently=False,
             )
         except Exception as e:
             print(f"Error sending email: {e}")
+            return Response({
+                'message': 'Order processed successfully, but there was an issue sending the confirmation email.',
+                'orders': order_data,
+                'email_error': str(e),
+            }, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response({
+        'message': 'Order processed successfully!',
+        'orders': order_data
+    }, status=status.HTTP_201_CREATED)
 
 
 # List all orders (GET request) (Admin only or authenticated users if needed)
