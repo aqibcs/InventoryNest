@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     # Public URLs
-    path('orders/create/', views.create_order, name='create_order'),  # Create order (public access)
+    path('orders/create/', views.process_order, name='create_order'),  # Create order (public access)
 
     # Authenticated URLs
     path('orders/', views.list_orders, name='list_orders'),  # List all orders (GET)
