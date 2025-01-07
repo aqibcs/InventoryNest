@@ -5,20 +5,30 @@ from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from .models import Product
 from .serializers import ProductsSerializer
+from shop.models import Shop
 
 
-# 1. Create Product (POST request)
+# 1. Create Product (POST request) - Only for users who have a shop
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_product(request):
+    # Check if the user has a shop
+    try:
+        shop = Shop.objects.get(owner=request.user)
+    except Shop.DoesNotExist:
+        return Response({"error": "You must create a shop before uploading products."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    # If the user has a shop, allow them to upload a product
     serializer = ProductsSerializer(data=request.data)
     if serializer.is_valid():
+        # Set the user who is uploading the product
         serializer.save(user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# 2. List Products (GET request) with Pagination
+# 2. List Products (GET request) with Pagination - Anyone can view products
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def list_products(request):
@@ -44,12 +54,12 @@ def list_products(request):
     return paginator.get_paginated_response(serializer.data)
 
 
-# 3. Retrieve Single Product (GET request)
+# 3. Retrieve Single Product (GET request) - Any user can view a product
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_product(request, pk):
     try:
-        product = Product.objects.get(pk=pk, user=request.user)
+        product = Product.objects.get(pk=pk)
     except Product.DoesNotExist:
         return Response({'error': "Product not found."},
                         status=status.HTTP_404_NOT_FOUND)
@@ -58,7 +68,7 @@ def get_product(request, pk):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# 4. Update Product (PUT/PATCH request)
+# 4. Update Product (PUT/PATCH request) - Only the product owner (user) can update it
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def update_product(request, pk):
@@ -75,7 +85,7 @@ def update_product(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# 5. Delete Product (DELETE request)
+# 5. Delete Product (DELETE request) - Only the product owner (user) can delete it
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_product(request, pk):
