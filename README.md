@@ -26,7 +26,7 @@
 - **Search & Filter**: Empower users to find resources quickly using search and filter features.
 - **Token-based Authentication**: Provide secure API access through JWT-based authentication.
 - **Admin Role Management**: Admins can manage user roles and monitor API usage.
-
+- **Shop and Cart Management**: Create, update, delete, and manage the cart.
 ---
 
 ## API Endpoints
@@ -38,11 +38,23 @@
 - **PATCH /profile**: Update user profile.
 
 ### Resource Management
-- **POST /create-resources**: Create a new resource (e.g., product).
-- **GET /resources**: List resources with optional filtering.
-- **GET /resources/{id}**: Retrieve a resource by ID.
-- **PUT/PATCH /resources/{id}/update**: Update a resource by ID.
-- **DELETE /resources/{id/delete}**: Delete a resource.
+- **POST /products/create/**: Create a new resource (e.g., product).
+- **GET /products/**: List resources with optional filtering.
+- **GET /products/<int:pk>/**: Retrieve a resource by ID.
+- **PUT/PATCH /products/<int:pk>/update/**: Update a resource by ID.
+- **DELETE /products/<int:pk>/delete/**: Delete a resource.
+
+### Cart Management
+- **POST /cart/add/**: Add a product to the cart.
+- **GET /cart/**: View the current cart.
+- **PUT/PATCH /cart/update/**: Update the cart with new quantities or products.
+- **DELETE /cart/remove/**: Remove a product from the cart.
+
+### Shop Management
+- **POST /shop/**: Create a new shop profile.
+- **GET /shop/profile/**: Retrieve shop profile details.
+- **PUT/PATCH /shop/update/**: Update the shop profile.
+- **DELETE /shop/delete/**: Delete the shop profile.
 
 ### Order Management
 - **POST /orders/create**: Create a new order (authenticated or guest users).
